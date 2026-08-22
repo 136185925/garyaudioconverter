@@ -7,6 +7,12 @@ at 44.1 or 48 kHz and writes selectable 16-bit or 24-bit 4× output at 176.4 or
 
 ## FIR MIN processing
 
+| Quality | 44.1 kHz family | 48 kHz family | Kaiser target |
+| --- | ---: | ---: | ---: |
+| Efficient | 1024 taps | 768 taps | ≥ 115 dB |
+| Studio | 2048 taps | 1536 taps | ≥ 133 dB |
+| Mastering | 10240 taps | 7680 taps | ≥ 168 dB |
+
 The desktop implementation keeps the STM32 FIR MIN signal path but increases
 the offline filter length substantially. Two independently selectable
 minimum-phase prototype designers are available:
@@ -25,11 +31,19 @@ stage, so they remain causal and do not add linear-phase pre-ringing. WLS
 LINEAR deliberately skips this stage and retains the original WLS magnitude
 and linear phase.
 
-| Quality | 44.1 kHz family | 48 kHz family | Kaiser target |
-| --- | ---: | ---: | ---: |
-| Efficient | 1024 taps | 768 taps | ≥ 115 dB |
-| Studio | 2048 taps | 1536 taps | ≥ 133 dB |
-| Mastering | 10240 taps | 7680 taps | ≥ 168 dB |
+| Filter Type | Passband weight | Transition weight | Stopband weight | Transition zone half width | Phase Characteristics |
+| --- | --- | --- | --- | --- | --- |
+| WLS MIN | 1.0 | 0.1 | 100,000 | \(11\pi/N\) | Minimum-phase |
+| WLS LINEAR | 1.0 | 0.1 | 100,000 | \(11\pi/N\) | Linear-phase |
+| WLS LISTEN | 1.0 | 0.05 | 10,000 | \(16\pi/N\) | Minimum-phase |
+
+##WLS LISTEN
+Wider, more flexible transition band
+Relax extreme stopband specifications，in exchange for shorter effective post-ringing
+Output files use the WLSLISTEN identifier
+Measured compared with standard WLS MIN：
+- 99.9% impulse energy convergence time shortened by about 22%～29%
+- 99.99% energy tail also significantly shortened
 
 The WLS normal equations have Toeplitz-plus-Hankel structure and are solved by
 preconditioned conjugate gradient with FFT matrix products, allowing the 10K
