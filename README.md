@@ -78,3 +78,9 @@ flutter build windows --release
 
 The release bundle is generated under
 `build/windows/x64/runner/Release/` and includes `gac_audio_engine.dll`.
+
+
+## HOW TO USE
+download Release.zip file and run on windows
+ - Release: First gen
+ - Release_v2: Add Linear WLS filter, which will not perform minimum-phase real cepstrum conversion, although I personally prefer minimum-phase, because this sounds the most natural (it does not contain pre-echo, but there will be a slight loss of phase) but I still added the Linear-phase option
