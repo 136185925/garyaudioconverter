@@ -15,7 +15,8 @@
 
 extern "C" {
 
-// design: 0 = Kaiser, 1 = weighted least squares.
+// design: 0 = Kaiser minimum phase, 1 = WLS minimum phase,
+//         2 = WLS linear phase.
 // quality: 0 = Efficient, 1 = Studio, 2 = Mastering.
 GAC_API int32_t gac_convert_wav(const wchar_t* input_path,
                                 const wchar_t* output_path,

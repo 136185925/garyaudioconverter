@@ -925,11 +925,13 @@ class _SettingsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'FIR MIN filter',
+                      design.isLinearPhase
+                          ? 'FIR LINEAR filter'
+                          : 'FIR MIN filter',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     Text(
-                      '${design.title} · homomorphic minimum phase',
+                      '${design.title} · ${design.phaseDescription}',
                       style: const TextStyle(color: _muted, fontSize: 10),
                     ),
                   ],

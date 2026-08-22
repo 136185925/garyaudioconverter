@@ -419,16 +419,16 @@ bool DesignWeightedLeastSquaresPrototype(uint32_t taps,
   return true;
 }
 
-bool DesignMinimumPhaseFilter(uint32_t sample_rate,
-                              const QualitySpec& quality,
-                              int32_t design,
-                              std::vector<double>* phase_coefficients,
-                              uint32_t* taps_per_phase) {
+bool DesignPolyphaseFilter(uint32_t sample_rate,
+                           const QualitySpec& quality,
+                           int32_t design,
+                           std::vector<double>* phase_coefficients,
+                           uint32_t* taps_per_phase) {
   const uint32_t output_rate = sample_rate * kUpsampleFactor;
   const uint32_t taps = sample_rate == 44100 ? quality.taps_44k
                                              : quality.taps_48k;
   std::vector<double> linear(taps);
-  if (design == 1) {
+  if (design != 0) {
     if (!DesignWeightedLeastSquaresPrototype(taps, &linear)) return false;
   } else {
     const double cutoff_hz = sample_rate == 44100 ? 22050.0 : 24000.0;
@@ -460,40 +460,47 @@ bool DesignMinimumPhaseFilter(uint32_t sample_rate,
   }
   for (double& value : linear) value /= linear_sum;
 
-  // Homomorphic spectral factorization: keep the causal cepstrum and double
-  // positive quefrencies to preserve the magnitude while moving all possible
-  // zeros inside the unit circle. A 32x FFT keeps truncation artifacts below
-  // the 24-bit output floor even in the approximately 10K-tap Mastering mode.
-  const size_t fft_size = NextPowerOfTwo(static_cast<size_t>(taps) * 32U);
-  std::vector<std::complex<double>> spectrum(fft_size);
-  for (uint32_t index = 0; index < taps; ++index) {
-    spectrum[index] = std::complex<double>(linear[index], 0.0);
-  }
-  Fft(&spectrum, false);
-  for (std::complex<double>& value : spectrum) {
-    value = std::complex<double>(
-        std::log(std::max(std::abs(value), 1.0e-14)), 0.0);
-  }
-  Fft(&spectrum, true);
-  for (size_t index = 1; index < fft_size / 2; ++index) spectrum[index] *= 2.0;
-  for (size_t index = fft_size / 2 + 1; index < fft_size; ++index) {
-    spectrum[index] = std::complex<double>(0.0, 0.0);
-  }
-  Fft(&spectrum, false);
-  for (std::complex<double>& value : spectrum) value = std::exp(value);
-  Fft(&spectrum, true);
+  std::vector<double> minimum_phase;
+  const std::vector<double>* final_filter = &linear;
+  if (design != 2) {
+    // Homomorphic spectral factorization: keep the causal cepstrum and double
+    // positive quefrencies to preserve the magnitude while moving all possible
+    // zeros inside the unit circle. A 32x FFT keeps truncation artifacts below
+    // the 24-bit output floor even in the approximately 10K-tap Mastering mode.
+    const size_t fft_size = NextPowerOfTwo(static_cast<size_t>(taps) * 32U);
+    std::vector<std::complex<double>> spectrum(fft_size);
+    for (uint32_t index = 0; index < taps; ++index) {
+      spectrum[index] = std::complex<double>(linear[index], 0.0);
+    }
+    Fft(&spectrum, false);
+    for (std::complex<double>& value : spectrum) {
+      value = std::complex<double>(
+          std::log(std::max(std::abs(value), 1.0e-14)), 0.0);
+    }
+    Fft(&spectrum, true);
+    for (size_t index = 1; index < fft_size / 2; ++index) {
+      spectrum[index] *= 2.0;
+    }
+    for (size_t index = fft_size / 2 + 1; index < fft_size; ++index) {
+      spectrum[index] = std::complex<double>(0.0, 0.0);
+    }
+    Fft(&spectrum, false);
+    for (std::complex<double>& value : spectrum) value = std::exp(value);
+    Fft(&spectrum, true);
 
-  std::vector<double> minimum_phase(taps);
-  double minimum_sum = 0.0;
-  for (uint32_t index = 0; index < taps; ++index) {
-    minimum_phase[index] = spectrum[index].real();
-    minimum_sum += minimum_phase[index];
+    minimum_phase.resize(taps);
+    double minimum_sum = 0.0;
+    for (uint32_t index = 0; index < taps; ++index) {
+      minimum_phase[index] = spectrum[index].real();
+      minimum_sum += minimum_phase[index];
+    }
+    if (std::abs(minimum_sum) < 1.0e-18) {
+      SetError(L"Unable to normalize the minimum-phase FIR.");
+      return false;
+    }
+    for (double& value : minimum_phase) value /= minimum_sum;
+    final_filter = &minimum_phase;
   }
-  if (std::abs(minimum_sum) < 1.0e-18) {
-    SetError(L"Unable to normalize the minimum-phase FIR.");
-    return false;
-  }
-  for (double& value : minimum_phase) value /= minimum_sum;
 
   const uint32_t phase_taps = taps / kUpsampleFactor;
   phase_coefficients->assign(taps, 0.0);
@@ -502,7 +509,7 @@ bool DesignMinimumPhaseFilter(uint32_t sample_rate,
       // Reverse each phase so coefficients and the mirrored history are both
       // traversed forwards; this lets MSVC vectorize the four accumulators.
       (*phase_coefficients)[phase * phase_taps + phase_taps - 1U - tap] =
-          minimum_phase[phase + kUpsampleFactor * tap];
+          (*final_filter)[phase + kUpsampleFactor * tap];
     }
   }
   *taps_per_phase = phase_taps;
@@ -753,7 +760,7 @@ int32_t gac_convert_wav(const wchar_t* input_path,
     SetError(L"The output path must be different from the source file.");
     return 1;
   }
-  design = std::clamp<int32_t>(design, 0, 1);
+  design = std::clamp<int32_t>(design, 0, 2);
   quality = std::clamp<int32_t>(quality, 0, 2);
   headroom_db = std::clamp(headroom_db, -12.0, 3.0);
   if (output_bits != 16 && output_bits != 24) {
@@ -772,9 +779,8 @@ int32_t gac_convert_wav(const wchar_t* input_path,
 
   std::vector<double> phase_coefficients;
   uint32_t taps_per_phase = 0;
-  if (!DesignMinimumPhaseFilter(info.sample_rate, kQualitySpecs[quality],
-                                design, &phase_coefficients,
-                                &taps_per_phase)) {
+  if (!DesignPolyphaseFilter(info.sample_rate, kQualitySpecs[quality], design,
+                             &phase_coefficients, &taps_per_phase)) {
     return 4;
   }
   g_progress.store(0.08);

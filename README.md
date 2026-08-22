@@ -1,14 +1,3 @@
-Open-source audio file converter，runs on Windows，converts 44.1/48khz to 176.4/192k, passband cutoff frequency 22.05/24 kHz，recommend the latest WLS MIN digital filter option，this is more advanced than the traditional kaiser-windowed Sinc truncation function
-
-##WLS implementation includes:
-- Continuous-frequency weighted least-squares design
-- Raised-cosine smooth transition band
-- High-weight stopband, optimizing overall image energy
-- FFT-accelerated preconditioned conjugate gradient solver
-- Homomorphic minimum-phase conversion, no linear-phase pre-echo
-- Reuse of the existing double-precision 4-phase polyphase engine
-- Weighted CLS/WLS, passband/stopband weights 1:100
-- WLS output files use the WLSMIN identifier
 # FIR MIN Audio Converter
 
 A Windows desktop WAV sample-rate converter built with Flutter and a native
@@ -27,9 +16,14 @@ minimum-phase prototype designers are available:
 - **WLS MIN / Natural** solves a continuous-frequency weighted least-squares
   problem. A lightly weighted raised-cosine transition preserves a smooth time
   response while a strongly weighted stopband minimizes total imaging energy.
+- **WLS LINEAR / Constant phase** uses that identical WLS prototype directly,
+  bypassing homomorphic conversion. Its symmetric impulse response has constant
+  group delay and symmetric pre/post-ringing.
 
-Both prototypes are converted with the same homomorphic minimum-phase stage,
-so WLS MIN remains causal and does not add linear-phase pre-ringing.
+Kaiser MIN and WLS MIN are converted with the same homomorphic minimum-phase
+stage, so they remain causal and do not add linear-phase pre-ringing. WLS
+LINEAR deliberately skips this stage and retains the original WLS magnitude
+and linear phase.
 
 | Quality | 44.1 kHz family | 48 kHz family | Kaiser target |
 | --- | ---: | ---: | ---: |
@@ -71,8 +65,9 @@ DLL performs FFT filter design and convolution away from the UI isolate.
   but resets its `COMPLETE` state to `QUEUED` for another conversion pass.
 - Standard RIFF/WAV output is limited to 4 GB.
 
-Kaiser output names use the form `song_FIRMIN_4x_176k4_24bit.wav`; WLS output
-names use `song_WLSMIN_4x_176k4_24bit.wav`.
+Kaiser output names use the form `song_FIRMIN_4x_176k4_24bit.wav`; minimum-phase
+WLS output names use `song_WLSMIN_4x_176k4_24bit.wav`; linear-phase WLS output
+names use `song_WLSLINEAR_4x_176k4_24bit.wav`.
 
 ## Build
 

@@ -22,6 +22,8 @@ void main() {
     expect(find.text('Kaiser MIN'), findsWidgets);
     expect(find.text('WLS MIN'), findsOneWidget);
     expect(find.text('Natural'), findsOneWidget);
+    expect(find.text('WLS LINEAR'), findsOneWidget);
+    expect(find.text('Constant phase'), findsOneWidget);
     expect(find.text('16 BIT'), findsOneWidget);
     expect(find.text('24 BIT'), findsOneWidget);
     expect(find.text('NS5 NOISE SHAPING'), findsOneWidget);
@@ -46,6 +48,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('WLS MIN · homomorphic minimum phase'), findsOneWidget);
     expect(find.textContaining('weighted energy'), findsNWidgets(3));
+
+    await tester.tap(find.text('WLS LINEAR'));
+    await tester.pumpAndSettle();
+    expect(find.text('FIR LINEAR filter'), findsOneWidget);
+    expect(
+      find.text('WLS LINEAR · direct symmetric linear phase'),
+      findsOneWidget,
+    );
   });
 
   test('completed jobs can be reset to the conversion queue', () {

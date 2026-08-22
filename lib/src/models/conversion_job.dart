@@ -6,12 +6,21 @@ enum FirDesign {
     subtitle: 'Balanced',
     description: 'Windowed-sinc · predictable peak rejection',
     fileTag: 'FIRMIN',
+    phaseDescription: 'homomorphic minimum phase',
   ),
   weightedLeastSquares(
     title: 'WLS MIN',
     subtitle: 'Natural',
     description: 'Weighted least squares · low total imaging energy',
     fileTag: 'WLSMIN',
+    phaseDescription: 'homomorphic minimum phase',
+  ),
+  weightedLeastSquaresLinear(
+    title: 'WLS LINEAR',
+    subtitle: 'Constant phase',
+    description: 'Weighted least squares · symmetric linear phase',
+    fileTag: 'WLSLINEAR',
+    phaseDescription: 'direct symmetric linear phase',
   );
 
   const FirDesign({
@@ -19,12 +28,16 @@ enum FirDesign {
     required this.subtitle,
     required this.description,
     required this.fileTag,
+    required this.phaseDescription,
   });
 
   final String title;
   final String subtitle;
   final String description;
   final String fileTag;
+  final String phaseDescription;
+
+  bool get isLinearPhase => this == FirDesign.weightedLeastSquaresLinear;
 }
 
 enum FirQuality {
