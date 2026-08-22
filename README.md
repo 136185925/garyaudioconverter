@@ -38,6 +38,7 @@ and linear phase.
 | WLS LISTEN | 1.0 | 0.05 | 10,000 | 16π/N | Minimum-phase |
 
 ##WLS LISTEN
+
 Wider, more flexible transition band
 Relax extreme stopband specifications，in exchange for shorter effective post-ringing
 Output files use the WLSLISTEN identifier
