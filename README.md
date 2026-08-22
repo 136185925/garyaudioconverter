@@ -33,9 +33,9 @@ and linear phase.
 
 | Filter Type | Passband weight | Transition weight | Stopband weight | Transition zone half width | Phase Characteristics |
 | --- | --- | --- | --- | --- | --- |
-| WLS MIN | 1.0 | 0.1 | 100,000 | \(11\pi/N\) | Minimum-phase |
-| WLS LINEAR | 1.0 | 0.1 | 100,000 | \(11\pi/N\) | Linear-phase |
-| WLS LISTEN | 1.0 | 0.05 | 10,000 | \(16\pi/N\) | Minimum-phase |
+| WLS MIN | 1.0 | 0.1 | 100,000 | 11π/N | Minimum-phase |
+| WLS LINEAR | 1.0 | 0.1 | 100,000 | 11π/N | Linear-phase |
+| WLS LISTEN | 1.0 | 0.05 | 10,000 | 16π/N | Minimum-phase |
 
 ##WLS LISTEN
 Wider, more flexible transition band
