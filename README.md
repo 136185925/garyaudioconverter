@@ -37,14 +37,17 @@ and linear phase.
 | WLS LINEAR | 1.0 | 0.1 | 100,000 | 11π/N | Linear-phase |
 | WLS LISTEN | 1.0 | 0.05 | 10,000 | 16π/N | Minimum-phase |
 
-### WLS LISTEN
-
-Wider, more flexible transition band
-Relax extreme stopband specifications，in exchange for shorter effective post-ringing
-Output files use the WLSLISTEN identifier
-Measured compared with standard WLS MIN：
-- 99.9% impulse energy convergence time shortened by about 22%～29%
-- 99.99% energy tail also significantly shortened
+### WLS LISTEN Release_V2.2
+WLS LISTEN has been changed to true Constrained WLS + Minimum Phase, and the Release build has been completed.
+Main changes:
+- 44.1 kHz: passband 0–20.5 kHz, transition to 22.05 kHz
+- 48 kHz: passband 0–22 kHz, transition to 24 kHz
+- Automatically tries 1/4/16/64/256× passband weights
+- Each candidate uses FFT to check passband ripple and stopband peak
+- Selects the candidate that satisfies the constraints and has the flattest passband
+- Constrained WLS uses up to 512 PCG iterations, 1e-12 relative accuracy
+- Continues to use Minimum-phase, with no linear-phase pre-echo
+- Kaiser MIN, WLS MIN, WLS LINEAR are all unchanged
 
 The WLS normal equations have Toeplitz-plus-Hankel structure and are solved by
 preconditioned conjugate gradient with FFT matrix products, allowing the 10K
@@ -84,11 +87,6 @@ Kaiser output names use the form `song_FIRMIN_4x_176k4_24bit.wav`; minimum-phase
 WLS output names use `song_WLSMIN_4x_176k4_24bit.wav`; linear-phase WLS output
 names use `song_WLSLINEAR_4x_176k4_24bit.wav`.
 
-# Recommended choice
- - For NOS-DAC, Kaiser MIN is recommended (especially for Schiit Multibit R-2R), and enabling TPDF and NS5 Noise Shaping is recommended. 
-Choose Bit depth according to your DAC's bit depth
-
- - For Delta-Sigma or DACs that already have a layer of Digital Filters, WLS MIN is recommended to preserve more amplitude information, and enabling TPDF and NS5 Noise Shaping is likewise recommended.
 
 ## Build
 
@@ -102,6 +100,6 @@ The release bundle is generated under
 
 
 ## HOW TO USE
-download Release.zip file and run on windows
+download Release_V2.2.zip file at right and run on windows
  - Release: First gen
  - Release_v2: Add Linear WLS filter, which will not perform minimum-phase real cepstrum conversion, although I personally prefer minimum-phase, because this sounds the most natural (it does not contain pre-echo, but there will be a slight loss of phase) but I still added the Linear-phase option
