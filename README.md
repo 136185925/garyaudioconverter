@@ -84,6 +84,12 @@ Kaiser output names use the form `song_FIRMIN_4x_176k4_24bit.wav`; minimum-phase
 WLS output names use `song_WLSMIN_4x_176k4_24bit.wav`; linear-phase WLS output
 names use `song_WLSLINEAR_4x_176k4_24bit.wav`.
 
+# Recommended choice
+ - For NOS-DAC, Kaiser MIN is recommended (especially for Schiit Multibit R-2R), and enabling TPDF and NS5 Noise Shaping is recommended. 
+Choose Bit depth according to your DAC's bit depth
+
+ - For Delta-Sigma or DACs that already have a layer of Digital Filters, WLS MIN is recommended to preserve more amplitude information, and enabling TPDF and NS5 Noise Shaping is likewise recommended.
+
 ## Build
 
 ```powershell
